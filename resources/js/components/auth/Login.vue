@@ -17,11 +17,13 @@
                             <input type="email" class="form-control" id="exampleInputEmail"
                             v-model="form.email" aria-describedby="emailHelp"
                             placeholder="Enter Email Address">
+                            <small class="text-danger" v-if="errors.email">{{errors.email[0]}}</small>
                             </div><!--email-->
 
                             <div class="form-group">
                             <input type="password" class="form-control" id="exampleInputPassword"
                             placeholder="Password" v-model="form.password">
+                            <small class="text-danger" v-if="errors.password">{{errors.password[0]}}</small>
                             </div><!--password-->
 
                             <div class="form-group">
@@ -57,19 +59,38 @@
 </template>
 <script>
 export default {
+    created(){
+        if(User.loggedIn())
+        {
+            this.$router.push({name: 'home'})
+        }
+    },
     data(){
         return{
             form:{
                 email:'',
                 password:''
-            }
+            },
+            errors:{}
         }
     },
     methods:{
-        login(){
-            axios.post('/api/auth/login',this.form)
-            .then(res => User.responseAfterLogin(res))
-            .catch(error => console.log(error.response.data))
+        async login(){
+        await axios.post('/api/auth/login',this.form)
+            .then(res =>{
+                 this.$router.push({name: 'home'});
+                    Toast.fire({
+                    icon: 'success',
+                    title: 'Signed in successfully'
+                })
+                User.responseAfterLogin(res);
+            })
+            .catch(error =>this.errors= error.response.data.errors)
+            .catch(
+                Toast.fire({
+                icon: 'warning',
+                title: 'Invalid email or password'
+            }))
         }
     }
 }
